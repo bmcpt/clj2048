@@ -7,7 +7,7 @@
 (def TEST_BOARD [[2 4 8 16]
                  [32 64 128 256]
                  [512 8 16 4096]
-                 [0 32 4096 8192]])
+                 [32 32 0 0]])
 
 (def ZERO_BOARD (vec (repeat SIZE (vec (repeat SIZE 0)))))
 

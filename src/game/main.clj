@@ -51,13 +51,42 @@
         val (* 2 (inc (rand-int 2)))]
     (assoc-in ZERO_BOARD [r c] val)))
 
+(defn slide_right [board]
+  (vec
+    (for [r (range SIZE)
+          :let [nums (vec (filter pos? (board r)))
+                nums_compressed (loop [nums nums]
+                                  (let [pair_indexes (filter
+                                                       (fn [idx]
+                                                         (= (nums idx)
+                                                            (nums (inc idx))))
+                                                       (range (dec (count nums))))]
+                                    (if (empty? pair_indexes)
+                                      nums
+                                      (let [pidx (first pair_indexes)]
+                                        (recur
+                                          (vec (concat (subvec nums 0 pidx)
+                                                       [(* 2 (nums pidx))]
+                                                       (subvec nums (+ 2 pidx)))))))))]]
+      (vec
+        (concat
+          (repeat (- SIZE (count nums_compressed)) 0)
+          nums_compressed)))))
+
 (defn run-game
   "Takes a channel as argument
-   input is for sending instructions [:UP :DOWN :LEFT :RIGHT]
+   input is for sending instructions [:Up :Down :Left :Right]
    ends when input is closed
    must run in a context in which TERM is defined properly"
   [input]
   (a/go-loop [board (init_board)]
     (render board)
-    (let [instr (a/<! input)]
-      )))
+    (let [instr (a/<! input)
+          new_board (case instr
+                      :Up board
+                      :Down board
+                      :Left board
+                      :Right (slide_right board)
+                      nil)]
+      (if new_board
+        (recur new_board)))))
