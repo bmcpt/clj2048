@@ -9,5 +9,18 @@
                  [512 8 16 4096]
                  [32 32 0 0]])
 
+(def COLOR_KEYS [:default
+                 :black
+                 :white
+                 :red
+                 :green
+                 :blue
+                 :cyan
+                 :magenta
+                 :yellow])
+
+(defn color_for [n]
+  (COLOR_KEYS (mod n (count COLOR_KEYS))))
+
 (def ZERO_BOARD (vec (repeat SIZE (vec (repeat SIZE 0)))))
 
