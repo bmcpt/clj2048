@@ -1,0 +1,4 @@
+{:deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/core.async {:mvn/version "1.5.648"}
+        clojure-lanterna {:mvn/version "0.9.7"}}
+ :aliases {:main {:exec-fn game.main/-main}}}
