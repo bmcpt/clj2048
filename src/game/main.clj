@@ -182,8 +182,7 @@
    output receives board states
    input is for sending instructions [:Up :Down :Left :Right :Restart]
 
-   ends when input is closed
-   must run in a context in which TERM is defined properly"
+   ends when input is closed"
   [input output]
   (a/go-loop [board ZERO_BOARD]
     (let [board (spawn_num board)]
