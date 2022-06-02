@@ -5,8 +5,8 @@
 
 (def ^:dynamic TERM)
 
-(defn victory [board]
-  (some #(= % WIN_VALUE) (flatten board)))
+(defn max_value [board]
+  (reduce max (flatten board)))
 
 (defn lost [board]
   (and
@@ -24,6 +24,23 @@
 
 (defn render [board]
   (t/clear TERM)
+  (t/set-fg-color TERM :default)
+
+  (let [max_c (* BOX_WIDTH SIZE)
+        max_r (* 2 SIZE)]
+    (doall
+      (for [c (range 1 max_c)]
+        (t/put-character TERM \- c 0)))
+    (doall
+      (for [c (range 1 max_c)]
+        (t/put-character TERM \- c max_r)))
+    (doall
+      (for [r (range 1 max_r)]
+        (t/put-character TERM \| 0 r)))
+    (doall
+      (for [r (range 1 max_r)]
+        (t/put-character TERM \| max_c r))))
+
   (doall
     (for [r (range SIZE)
           c (range SIZE)
@@ -35,9 +52,9 @@
         (t/set-fg-color TERM (color_for n))
         (t/put-string TERM (.toString n) x y))))
   (cond
-    (victory board) (do
-                      (t/set-fg-color TERM :green)
-                      (t/put-string TERM "You Won!" 1 (inc (* 2 SIZE))))
+    (>= (max_value board) WIN_VALUE) (do
+                                       (t/set-fg-color TERM :green)
+                                       (t/put-string TERM "You Won!" 1 (inc (* 2 SIZE))))
     (lost board) (do
                    (t/set-fg-color TERM :red)
                    (t/put-string TERM "You Lost!" 1 (inc (* 2 SIZE)))))
@@ -129,6 +146,29 @@
           compressed
           (repeat (- SIZE (count compressed)) 0))))))
 
+(defn get_col [board c]
+  (vec (for [r (range SIZE)]
+         (get-in board [r c]))))
+
+(defn flip [board]
+  (vec
+    (for [r (range SIZE)]
+      (vec
+        (for [c (range SIZE)]
+          (get-in board [c r]))))))
+
+(defn slide_down [board]
+  (-> board
+      flip
+      slide_right
+      flip))
+
+(defn slide_up [board]
+  (-> board
+      flip
+      slide_left
+      flip))
+
 (defn run_game
   "Takes a channel as argument
    input is for sending instructions [:Up :Down :Left :Right]
@@ -140,8 +180,8 @@
       (render board)
       (let [instr (a/<! input)
             shifted_board (case instr
-                            :Up board
-                            :Down board
+                            :Up (slide_up board)
+                            :Down (slide_down board)
                             :Left (slide_left board)
                             :Right (slide_right board)
                             :Restart ZERO_BOARD
