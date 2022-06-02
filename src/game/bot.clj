@@ -8,12 +8,7 @@
   (binding [TERM (t/get-terminal :unix)]
     (t/start TERM)
     (let [input (a/chan 64)
-          output (a/chan 64)
-          quit (fn []
-                 (do
-                   (t/stop TERM)
-                   (a/close! input)
-                   (a/close! output)))]
+          output (a/chan 64)]
 
       ; Rendering event loop
       (a/go-loop []
