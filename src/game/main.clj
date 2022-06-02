@@ -9,7 +9,18 @@
   (some #(= % WIN_VALUE) (flatten board)))
 
 (defn lost [board]
-  true)
+  (and
+    (not (some zero? (flatten board)))
+    (every? identity
+            (for [r (range SIZE)
+                  c (range (dec SIZE))]
+              (not= (get-in board [r c])
+                    (get-in board [r (inc c)]))))
+    (every? identity
+            (for [c (range SIZE)
+                  r (range (dec SIZE))]
+              (not= (get-in board [r c])
+                    (get-in board [(inc r) c]))))))
 
 (defn render [board]
   (t/clear TERM)
@@ -26,7 +37,7 @@
                       (t/put-string TERM "You Won!" 1 (inc (* 2 SIZE))))
     (lost board) (do
                    (t/set-fg-color TERM :red)
-                   (t/put-string TERM "You Lost!" 1 (* 2 5))))
+                   (t/put-string TERM "You Lost!" 1 (inc (* 2 SIZE)))))
   (t/put-string TERM "" 0 (* 2 (inc SIZE))))
 
 (defn -main []
