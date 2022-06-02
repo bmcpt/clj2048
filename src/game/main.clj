@@ -66,10 +66,21 @@
   (binding [TERM (t/get-terminal :unix)]
     (t/start TERM)
     (let [input (a/chan 64)
+          output (a/chan 64)
           quit (fn []
                  (do
                    (t/stop TERM)
-                   (a/close! input)))]
+                   (a/close! input)
+                   (a/close! output)))]
+
+      ; Rendering event loop
+      (a/go-loop []
+        (let [board (a/<! output)]
+          (when board
+            (render board)
+            (recur))))
+
+      ; Input event loop
       (a/go-loop []
         (let [continue (try
                          (let [c (t/get-key-blocking TERM)]
@@ -98,7 +109,7 @@
                            false))]
           (if continue
             (recur))))
-      (a/<!! (run_game input)))))
+      (a/<!! (run_game input output)))))
 
 (defn compress_nums [nums]
   (loop [nums nums]
@@ -146,10 +157,6 @@
           compressed
           (repeat (- SIZE (count compressed)) 0))))))
 
-(defn get_col [board c]
-  (vec (for [r (range SIZE)]
-         (get-in board [r c]))))
-
 (defn flip [board]
   (vec
     (for [r (range SIZE)]
@@ -170,14 +177,17 @@
       flip))
 
 (defn run_game
-  "Takes a channel as argument
-   input is for sending instructions [:Up :Down :Left :Right]
+  "Takes two channel as arguments
+
+   output receives board states
+   input is for sending instructions [:Up :Down :Left :Right :Restart]
+
    ends when input is closed
    must run in a context in which TERM is defined properly"
-  [input]
+  [input output]
   (a/go-loop [board ZERO_BOARD]
     (let [board (spawn_num board)]
-      (render board)
+      (a/>! output board)
       (let [instr (a/<! input)
             shifted_board (case instr
                             :Up (slide_up board)
